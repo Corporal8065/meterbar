@@ -466,14 +466,30 @@ void MainComponent::drawVisualizerBackground(juce::Graphics& g) {
     vs.saturation = engine.state.visualizerSaturation;
     vs.paletteSpread = engine.state.visualizerSpread;
     vs.cycleSeconds = engine.state.visualizerCycleSec;
+    // v0.21.0: LINKED, the particle field spans the GROUP — the
+    // union of the linked bars' screen rects — and this bar draws
+    // only its slice of it (core fieldMap), so the bursts and
+    // convergers play across the whole linked strip instead of
+    // restarting at this bar's own centre. Unlinked or alone the
+    // map is the bar-local one and the render is v0.20.3's,
+    // unchanged. (The siblings render the same field from this
+    // bar's BarLink audio broadcast.)
+    auto group = linkClient_.groupRect();
+    auto own = getScreenBounds();
+    if (group.isEmpty() || own.isEmpty()) group = own;
+    const auto fm = meterbar::fieldMap(
+        meterbar::IntRect{ own.getX(), own.getY(), own.getWidth(), own.getHeight() },
+        meterbar::IntRect{ group.getX(), group.getY(), group.getWidth(), group.getHeight() }, iw, ih);
     {
         juce::Graphics ig(vizCache);
         ig.fillAll(juce::Colours::black);
         for (auto& p : visualizer.particles()) {
             auto c = visualizer.colorFor(p, vs);
             ig.setColour(juce::Colour(c.r, c.g, c.b));
-            const float px = p.x * (float)iw, py = p.y * (float)ih;
+            float px, py;
+            meterbar::fieldToLocal(fm, p.x, p.y, px, py);
             const float r = p.size * 1.35f; // v0.20.3: plumper dots — softer, rounder blobs (TickerBar v0.4.0 sibling)
+            if (!meterbar::fieldDotVisible(px, py, r, iw, ih)) continue; // another bar's slice of the field
             ig.fillEllipse(px - r, py - r, r * 2.f, r * 2.f);
         }
     }

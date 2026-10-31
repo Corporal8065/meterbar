@@ -4,6 +4,43 @@ Verification rule (Jackson, 2026-10-29): every item is DONE only with
 proof — the full DSP suite green after the change, new checks for new
 behaviour, and errors recorded here with their actual text, never hidden.
 
+## v0.21.0 (2026-10-31) — one linked background across the bars (Jackson's ask)
+
+Jackson's words (dictated, 2026-10-31): "the addition to MeterBar
+where we change the background graphics needs to be applied to
+not only MeterBar but when you connect the other 2 softwares to
+all link and instead use the combination of the 3 resolutions as
+the sizing for it, and then when sound is played with specific
+frequencies and or transients that we have set up will do its
+thing."
+
+- **Group field map — DONE in code, core-proven.** New pure core
+  in `BarLink.hpp` (identical in all three repos): `fieldMap` /
+  `fieldToLocal` / `fieldDotVisible`. When the bars are linked,
+  the visualizer's unit field spans the GROUP rect — the union of
+  the linked bars' screen rects, i.e. the combination of their
+  resolutions — and each bar renders only its own slice of it.
+  Bursts anchor at the centre of the COMBINED strip and the
+  ambient convergers stream toward that same centre across the
+  seams. 17 new checks pin the seam arithmetic, the three-bar
+  middle third, vertical stacks, degenerate-rect fallback and
+  dot culling. Suite 989 → 1006 checks, 0 failures.
+- **Render — DONE in code.** This bar is the audio source: its
+  visualizer (driven by its own spectrum, the same bands it
+  broadcasts over BarLink) now maps through the field map in
+  `drawVisualizerBackground`. Unlinked (or linked but alone) the
+  map is the bar-local identity and the v0.20.3 render runs
+  unchanged; dot radius is deliberately NOT remapped — physical
+  dot size is preserved, only positions come from the group.
+  The edited translation unit passes a full g++ syntax/type
+  check against the JUCE 8.0.4 headers (0 errors). The Windows
+  CI build after push, and Jackson's eyes on the linked strip,
+  are the remaining proof — nothing visual was verified here.
+- **Siblings.** TickerBar v0.5.0 and SessionBar v0.4.0 render the
+  same field from this bar's broadcast; SessionBar also received
+  the feel-pass render treatment it missed in the v0.4.0 round
+  (its own REQUESTS record).
+
 ## Landed on main 2026-10-29 (SessionBar v0.2.1 fix round — no MeterBar bump/tag tonight; releases tomorrow)
 
 Shared-core corrections from Jackson's SessionBar field test, applied
